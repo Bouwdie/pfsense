@@ -1,23 +1,23 @@
-<?php 
+<?php
 /* $Id$ */
 /*
 	services_dnsmasq_edit.php
 	part of m0n0wall (http://m0n0.ch/wall)
-	
+
 	Copyright (C) 2003-2004 Bob Zoller <bob@kludgebox.com> and Manuel Kasper <mk@neon1.net>.
 	Copyright (C) 2013-2015 Electric Sheep Fencing, LP
 	All rights reserved.
-	
+
 	Redistribution and use in source and binary forms, with or without
 	modification, are permitted provided that the following conditions are met:
-	
+
 	1. Redistributions of source code must retain the above copyright notice,
 	   this list of conditions and the following disclaimer.
-	
+
 	2. Redistributions in binary form must reproduce the above copyright
 	   notice, this list of conditions and the following disclaimer in the
 	   documentation and/or other materials provided with the distribution.
-	
+
 	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
 	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
@@ -54,10 +54,11 @@ function hosts_sort() {
 }
 
 require("guiconfig.inc");
+require('classes/Form.class.php');
 
 $referer = (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/services_dnsmasq.php');
 
-if (!is_array($config['dnsmasq']['hosts'])) 
+if (!is_array($config['dnsmasq']['hosts']))
 	$config['dnsmasq']['hosts'] = array();
 
 $a_hosts = &$config['dnsmasq']['hosts'];
@@ -83,11 +84,11 @@ if ($_POST) {
 	/* input validation */
 	$reqdfields = explode(" ", "domain ip");
 	$reqdfieldsn = array(gettext("Domain"),gettext("IP address"));
-	
+
 	do_input_validation($_POST, $reqdfields, $reqdfieldsn, $input_errors);
-	
+
 	if ($_POST['host']) {
-		if (!is_hostname($_POST['host'])) { 
+		if (!is_hostname($_POST['host'])) {
 			$input_errors[] = gettext("The hostname can only contain the characters A-Z, 0-9 and '-'. It may not start or end with '-'.");
 		} else {
 			if (!is_unqualified_hostname($_POST['host'])) {
@@ -96,10 +97,10 @@ if ($_POST) {
 		}
 	}
 
-	if (($_POST['domain'] && !is_domain($_POST['domain']))) 
+	if (($_POST['domain'] && !is_domain($_POST['domain'])))
 		$input_errors[] = gettext("A valid domain must be specified.");
-		
-	if (($_POST['ip'] && !is_ipaddr($_POST['ip']))) 
+
+	if (($_POST['ip'] && !is_ipaddr($_POST['ip'])))
 		$input_errors[] = gettext("A valid IP address must be specified.");
 
 	/* collect aliases */
@@ -122,7 +123,7 @@ if ($_POST) {
 			$aliases[$entry][$field] = $value;
 		}
 	}
-	$pconfig['aliases']['item'] = $aliases;
+	$pconfig['aliases'] = $aliases;
 
 	/* validate aliases */
 	foreach ($aliases as $idx => $alias) {
@@ -169,11 +170,11 @@ if ($_POST) {
 		else
 			$a_hosts[] = $hostent;
 		hosts_sort();
-		
+
 		mark_subsystem_dirty('hosts');
-		
+
 		write_config();
-		
+
 		header("Location: services_dnsmasq.php");
 		exit;
 	}
@@ -183,63 +184,55 @@ $pgtitle = array(gettext("Services"),gettext("DNS forwarder"),gettext("Edit host
 $shortcut_section = "forwarder";
 include("head.inc");
 
+if ($input_errors)
+	print_input_errors($input_errors);
+
+$form = new Form;
+
+$section = new Form_Section('Edit DNS Forwarder entry');
+
+$section->addInput(new Form_Input(
+	'host',
+	'Host',
+	'text',
+	$pconfig['host']
+))->setHelp(
+	'Name of the host, without domain part e.g. myhost'
+);
+
+$section->addInput(new Form_Input(
+	'domain',
+	'Domain',
+	'text',
+	$pconfig['domain']
+))->setHelp(
+	'Domain of the host e.g. example.com'
+);
+
+$section->addInput(new Form_IpAddress(
+	'ip',
+	'IP address',
+	$pconfig['ip']
+))->setHelp(
+	'IP address of the host e.g. 192.168.100.100 or fd00:abcd::1'
+);
+
+$section->addInput(new Form_Input(
+	'description',
+	'Description',
+	'text',
+	$pconfig['descr']
+))->setHelp(
+	'You may enter a description here for your reference (not parsed)'
+);
+
+$form->add($section);
+
+print $form;
+
 ?>
-
-">
-
-
-<script type="text/javascript" src="/javascript/row_helper.js">
-</script>
-
-<script type="text/javascript">
-//<![CDATA[
-	rowname[0] = "aliashost";
-	rowtype[0] = "textbox";
-	rowsize[0] = "20";
-	rowname[1] = "aliasdomain";
-	rowtype[1] = "textbox";
-	rowsize[1] = "20";
-	rowname[2] = "aliasdescription";
-	rowtype[2] = "textbox";
-	rowsize[2] = "20";
-//]]>
-</script>
-
-<?php if ($input_errors) print_input_errors($input_errors)?>
 		<form action="services_dnsmasq_edit.php" method="post" name="iform" id="iform">
 		<table>
-				<tr>
-					<td><?=gettext("Edit DNS Forwarder entry")?></td>
-				</tr>	
-				<tr>
-				  <td><?=gettext("Host")?></td>
-				  <td> 
-					<input name="host" type="text" class="formfld unknown" id="host" size="40" value="<?=htmlspecialchars($pconfig['host'])?>" />
-					<br /><span><?=gettext("Name of the host, without".
-				   " domain part")?><br />
-				   <?=gettext("e.g.")?><em><?=gettext("myhost")?></em></span></td>
-				</tr>
-				<tr>
-				  <td><?=gettext("Domain")?></td>
-				  <td> 
-					<input name="domain" type="text" class="formfld unknown" id="domain" size="40" value="<?=htmlspecialchars($pconfig['domain'])?>" />
-					<br /><span><?=gettext("Domain of the host")?><br />
-				   <?=gettext("e.g.")?><em><?=gettext("example.com")?></em></span></td>
-				</tr>
-				<tr>
-				  <td><?=gettext("IP address")?></td>
-				  <td> 
-					<input name="ip" type="text" class="formfld unknown" id="ip" size="40" value="<?=htmlspecialchars($pconfig['ip'])?>" />
-					<br /><span><?=gettext("IP address of the host")?><br />
-				   <?=gettext("e.g.")?><em>192.168.100.100</em><?=gettext("or")?><em>fd00:abcd::1</em></span></td>
-				</tr>
-				<tr>
-				  <td><?=gettext("Description")?></td>
-				  <td> 
-					<input name="descr" type="text" class="formfld unknown" id="descr" size="40" value="<?=htmlspecialchars($pconfig['descr'])?>" />
-					<br /><span><?=gettext("You may enter a description here".
-				   " for your reference (not parsed).")?></span></td>
-				</tr>
 				<tr>
 				  <td><div><?=gettext("Aliases")?></div></td>
 				  <td>
@@ -260,10 +253,10 @@ include("head.inc");
 						<?php
 						  $counter = 0;
 						  if($pconfig['aliases']['item']):
-							foreach($pconfig['aliases']['item'] as $item):
-							  $host = $item['host'];
-							  $domain = $item['domain'];
-							  $description = $item['description'];
+							foreach($pconfig['aliases'] as $alias):
+							  $host = $alias['host'];
+							  $domain = $alias['domain'];
+							  $description = $alias['description'];
 						?>
 						<tr>
 						  <td>
@@ -301,7 +294,7 @@ include("head.inc");
 				</tr>
 				<tr>
 				  <td>&nbsp;</td>
-				  <td> 
+				  <td>
 					<input name="Submit" type="submit" class="formbtn" value="<?=gettext("Save")?>" />
 					<input type="button" class="formbtn" value="<?=gettext("Cancel")?>" onclick="window.location.href='<?=$referer?>'" />
 					<?php if (isset($id) && $a_hosts[$id]): ?>
