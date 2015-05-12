@@ -231,7 +231,6 @@ $form->add($section);
 print $form;
 
 ?>
-		<form action="services_dnsmasq_edit.php" method="post" name="iform" id="iform">
 		<table>
 				<tr>
 				  <td><div><?=gettext("Aliases")?></div></td>
@@ -279,31 +278,17 @@ print $form;
 						?>
 					  </tbody>
 					</table>
-					<a onclick="javascript:addRowTo('maintable', 'formfldalias'); return false;" href="#">
-					  <img border="0" src="/themes/<?=$g['theme']?>/images/icons/icon_plus.gif" alt="" title="<?=gettext("add another entry")?>" />
-					</a>
-					<script type="text/javascript">
-					//<![CDATA[
-					  field_counter_js = 3;
-					  rows = 1;
-					  totalrows = <?=$counter?>;
-					  loaded = <?=$counter?>;
-					//]]>
-					</script>
 				  </td>
 				</tr>
 				<tr>
-				  <td>&nbsp;</td>
-				  <td>
-					<input name="Submit" type="submit" class="formbtn" value="<?=gettext("Save")?>" />
-					<input type="button" class="formbtn" value="<?=gettext("Cancel")?>" onclick="window.location.href='<?=$referer?>'" />
+					<td>
 					<?php if (isset($id) && $a_hosts[$id]): ?>
 					<input name="id" type="hidden" value="<?=htmlspecialchars($id)?>" />
 					<?php endif?>
 				  </td>
 				</tr>
 		</table>
-</form>
+
 <?php include("foot.inc")?>
 </body>
 </html>
